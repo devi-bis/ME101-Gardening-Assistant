@@ -1,0 +1,33 @@
+void LineFollow(){
+	
+	float AdjustFactor = 0.0;
+	
+	while (sensorValue[S2] == 1 || sensorValue[S2] == 6){
+		
+		if (sensorValue[S3] >= 36.0 && sensorValue[S3] <= 48.0){
+			
+			motor[motorA] = motor[motorC] = 50;
+			
+		}
+		
+		else if (sensorValue[S3] < 36.0){
+			
+			AdjustFactor = (36.0 - sensorValue[S3])/30.0;
+			motor[motorA] = 50;
+			motor[motorC] = 50 - AdjustFactor*50;
+			
+		}
+		
+		else if (sensorValue[S3] > 48.0){
+			
+			AdjustFactor = (sensorValue[S3] - 48.0)/56.0;
+			motor[motorC] = 50;
+			motor[motorA] = 50 - AdjustFactor*50;
+			
+		}		
+		
+	}
+	
+	motor[motorA] = motor[motorC] = 0;
+	
+}
