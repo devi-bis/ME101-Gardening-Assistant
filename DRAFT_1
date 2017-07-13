@@ -1,0 +1,105 @@
+#include "NXTServo-lib-UW.c"
+
+void CRServoOFF()
+{
+	setServoSpeed(S1, 1, 25);										//Unconfigured setServoSpeed function to avoid creep at deadband boundary, manually set speed to center of deadband to ensure 0 creep
+}
+	
+void CRServo(int CRDir)												//Rotate Continuos Servo (1 for CW, -1 for CCW)
+{
+	setServoSpeed(S1, 1, 25*CRDir, 13, 39);			//Configured to account for servo deadband (13 - 39)
+}
+
+void DrillVert(int Dist, int Dir)				//Moves Drill by user specified distance (in mm), in user specified direction (1 for down, -1 for up)
+{
+	nMotorEncoder[motorB] = 0;
+	const float winchDiam = 23.0;					//Diameter of motorB "winch" in mm
+	
+	while (abs(nMotorEncoder[motorB]) < (Dist/(PI*winchDiam))*360){
+		motor[motorB] = 80*Dir;
+	}
+
+	motor[motorB] = 0;
+}
+
+void LineFollow()												//Follows black line until colour senor detects colour other than Bl/W, adjusting motor speeds to keep robot on track
+{																				//Program designed such that black line is on the LEFT side of intensity sensor, white on the RIGHT. Sensor placed dead CENTER during setup
+	float AdjustFactor = 0.0;							
+	const float left = 36.0;							//Uses const vars for ease of calibration - ability to tweak adjust factor without editing the whole function
+	const float leftDiv = 30.0;
+	const float right = 48.0;
+	const float rightDiv = 56.0;
+	
+	while (SensorValue[S2] == 1 || SensorValue[S2] == 6){
+		
+		if (SensorValue[S3] >= left && SensorValue[S3] <= right){
+			motor[motorA] = 50;
+			motor[motorC] = 50;
+		}
+		
+		else if (SensorValue[S3] < left){
+			AdjustFactor = (left - SensorValue[S3])/leftDiv;
+			motor[motorA] = 50;
+			motor[motorC] = 50 - AdjustFactor*50;
+		}
+		
+		else if (SensorValue[S3] > right){
+			AdjustFactor = (SensorValue[S3] - right)/rightDiv;
+			motor[motorC] = 50;
+			motor[motorA] = 50 - AdjustFactor*50;
+		}		
+	}
+	
+	motor[motorA] = 0;
+	motor[motorC] = 0;
+}
+
+void Terminate()
+{
+	
+}
+
+bool Dig()
+{
+	int config = SensorValue[S2];
+	const int turnDeg = 1440;							//Degrees one motor encoder needs to turn for a 90 degree turn - determined empirically
+	const int clearance  = 40;						//Drill bit clearance from the ground, in mm
+	const int troughDist = 100;						//Distance from dirt trough after turning, in mm
+	const int wheelDiam = 30;
+	
+	if (config == 5){
+		Terminate();
+		return false;
+	}
+	
+	nMotorEncoder[motorA] = 0;
+	motor[motorA] = 50;	
+	motor[motorC] = -50;
+	while (nMotorEncoder[motorA] < turnDeg){}
+	
+	motor[motorA] = 0;
+	motor[motorC] = 0;
+	
+	nMotorEncoder[motorA] = 0;
+	motor[motorA] = 50;
+	motor[motorB] = 50;
+	while (nmotorEncoder[motor] < (troughDist/(PI*wheelDiam))*360){}
+	
+	motor[motorA] = 0;
+	motor[motorC] = 0;
+	
+	CRServo(-1);
+	
+	
+	
+}
+
+task main()
+{
+	SensorType[S1] = sensorI2CCustom9V;				//Declare Tetrix Servo Controller Port
+	SensorType[S2] = sensorColorNxtFULL;			//Declare	Sensor Ports
+	SensorType[S3] = sensorLightActive;				//Intensity Sensor (for line following)
+
+
+
+}
