@@ -29,8 +29,8 @@ void DrillDown(int Dist, bool Dir)			//Moves Drill by user specified distance (i
 task main()
 {
 	SensorType[S1] = sensorI2CCustom9V;		//Declare Tetrix Servo Controller Port
-	SensorType[S2] = sensorColorNxtFULL;		//Declare Sensor Ports
-//	SensorType[S3] = INTENSITY SENSOR
+	SensorType[S2] = sensorColorNxtFULL;		//Colour Sensor
+	SensorType[S3] = sensorLightActive;		//Intensity Sensor (for line following)
 
 
 
