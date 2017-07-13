@@ -1,26 +1,30 @@
 void LineFollow(){
 	
 	float AdjustFactor = 0.0;
+	const float left = 36.0;
+	const float leftDiv = 30.0;
+	const float right = 48.0;
+	const float rightDiv = 56.0;
 	
 	while (sensorValue[S2] == 1 || sensorValue[S2] == 6){
 		
-		if (sensorValue[S3] >= 36.0 && sensorValue[S3] <= 48.0){
+		if (sensorValue[S3] >= left && sensorValue[S3] <= right){
 			
 			motor[motorA] = motor[motorC] = 50;
 			
 		}
 		
-		else if (sensorValue[S3] < 36.0){
+		else if (sensorValue[S3] < left){
 			
-			AdjustFactor = (36.0 - sensorValue[S3])/30.0;
+			AdjustFactor = (left - sensorValue[S3])/leftDiv;
 			motor[motorA] = 50;
 			motor[motorC] = 50 - AdjustFactor*50;
 			
 		}
 		
-		else if (sensorValue[S3] > 48.0){
+		else if (sensorValue[S3] > right){
 			
-			AdjustFactor = (sensorValue[S3] - 48.0)/56.0;
+			AdjustFactor = (sensorValue[S3] - right)/rightDiv;
 			motor[motorC] = 50;
 			motor[motorA] = 50 - AdjustFactor*50;
 			
