@@ -27,51 +27,28 @@ void DrillVert(float Dist, int Dir)			//Moves Drill based on colour-coded distan
 }
 
 //Non Trivial Function 2: Jusroop Sangha
-void LineFollow(bool Terminate)					//Follows black line until colour sensor detects colour other than Bl/W, adjusting motor speeds to keep robot on track
-{																				//Program designed such that black line is on the LEFT side of intensity sensor, white on the RIGHT. Sensor placed dead CENTER during setup
+void LineFollow()												//Follows black line until colour sensor detects colour other than Bl/W, adjusting motor speeds to keep robot on track
+{																				//Program designed such that black line is on the LEFT side of intensity sensor, white on the RIGHT.
 	float AdjustFactor = 0.0;
-	const float left = 35.0;							//Uses const vars for ease of calibration - ability to tweak adjust factor without editing the whole function
-	const float leftDiv = 10.0;
-	const float right = 40.0;
-	const float rightDiv = 10.0;
+	const float left = 38.0;							//Uses const vars for ease of calibration - ability to tweak adjust factor without editing the whole function
+	const float leftDiv = 8.0;
+	const float right = 43.0;
+	const float rightDiv = 8.0;
 
-	//Contents of while loop are explicitly repeated instead of making a seperate function, as the NXT CPU struggles to consistently perform
-	//the necessary calculations within a seperate function
+	while (SensorValue[S2] == 1 || SensorValue[S2] == 6){					//Follow line until colour sensor detects a colour
 
-	while (Terminate && SensorValue[S2] != 5){		//If terminate function has been activated, robot follows line ignoring colours, until it sees red, where it stops
-
-		if (SensorValue[S3] >= left && SensorValue[S3] <= right){
+		if (SensorValue[S3] >= left && SensorValue[S3] <= right){		//Drive straight when intensity sensor is in nominal range
 			motor[motorA] = 50;
 			motor[motorC] = 50;
 		}
 
-		else if (SensorValue[S3] < left){
+		else if (SensorValue[S3] < left){														//Adjust right when intensity sensor reading is low
 			AdjustFactor = (left - SensorValue[S3])/leftDiv;
 			motor[motorA] = 50;
 			motor[motorC] = 50 - AdjustFactor*50;
 		}
 
-		else if (SensorValue[S3] > right){
-			AdjustFactor = (SensorValue[S3] - right)/rightDiv;
-			motor[motorC] = 50;
-			motor[motorA] = 50 - AdjustFactor*50;
-		}
-	}
-
-	while (SensorValue[S2] == 1 || SensorValue[S2] == 6){				//If terminate function has not been activated, follow line until colour sensor detects a colour
-
-		if (SensorValue[S3] >= left && SensorValue[S3] <= right){
-			motor[motorA] = 50;
-			motor[motorC] = 50;
-		}
-
-		else if (SensorValue[S3] < left){
-			AdjustFactor = (left - SensorValue[S3])/leftDiv;
-			motor[motorA] = 50;
-			motor[motorC] = 50 - AdjustFactor*50;
-		}
-
-		else if (SensorValue[S3] > right){
+		else if (SensorValue[S3] > right){													//Adjust left when intensity sensor reading is high
 			AdjustFactor = (SensorValue[S3] - right)/rightDiv;
 			motor[motorC] = 50;
 			motor[motorA] = 50 - AdjustFactor*50;
@@ -85,16 +62,16 @@ void LineFollow(bool Terminate)					//Follows black line until colour sensor det
 //Non Trivial Function 3: Siddharth Kumar
 void Terminate()												//Initiates program termination, returns robot to start location
 {
-	motor[motorA] = -20;									//Manually bypasses seeing black line on turn
+	motor[motorA] = -20;									//Blind turn to avoid seeing black line initially
 	motor[motorC] = 20;
 	wait1Msec(1000);
 
-	while (SensorValue[S3] > 38){}				//Turns around until intensity sensor reading is low (into the black line)
+	while (SensorValue[S3] > 40){}				//Turns around until intensity sensor reading is low (into the black line)
 	motor[motorA] = 0;
 	motor[motorC] = 0;
 
 
-	LineFollow(true);
+	LineFollow();
 }
 
 //Non Trivial Function 4: Siddharth Kumar
@@ -119,14 +96,14 @@ void Drill(float drillDist)
 //Non Trivial Function 5: Zulphkar Yalchin
 bool Dig()
 {
-	int config = SensorValue[S2];
+	int config = SensorValue[S2];					//Save colour sensor reading
 	const float turnDeg = 520.0;					//Degrees one motor encoder needs to turn for a 90 degree turn - determined empirically
 	const float troughDist = 100.0;				//Distance from dirt trough after turning, in mm
 	const float wheelDiam = 30.0;
 
-	if (config == 5){
+	if (config == 5){											//If colour sensor reads red, initiate program termination (turn robot and return to start location)
 		Terminate();
-		return false;
+		return false;												//Signal main function to end
 	}
 
 	nMotorEncoder[motorA] = 0;						//Turn
@@ -145,7 +122,7 @@ bool Dig()
 	motor[motorA] = 0;
 	motor[motorC] = 0;
 
-	Drill(config);
+	Drill(config);												//Perform drilling activities using colour sensor reading configuration
 
 	nMotorEncoder[motorA] = 0;						//Move Back
 	motor[motorA] = -50;
@@ -159,7 +136,7 @@ bool Dig()
 	motor[motorA] = -20;
 	motor[motorC] = 20;
 	wait1Msec(2500);
-	while (SensorValue[S3] > 37){}				//Lock itself back onto the black line
+	while (SensorValue[S3] > 38){}				//Lock itself back onto the black line
 
 	motor[motorA] = 50;										//Manually bypass seeing same dig colour again
 	motor[motorC] = 50;
@@ -167,7 +144,7 @@ bool Dig()
 	motor[motorA] = 0;
 	motor[motorC] = 0;
 
-	return true;
+	return true;													//Signal main function to continue looping
 
 }
 
@@ -194,10 +171,11 @@ void IOManager(bool StartDisplay, bool EndDisplay, bool ButtonPress)	//Program t
 
 }
 
+//Main Function: Devidutta Biswabharati
 task main()
 {
-	SensorType[S1] = sensorI2CCustom9V;				//Declare Tetrix Servo Controller Port
-	SensorType[S2] = sensorColorNxtFULL;			//Declare	Sensor Ports
+	SensorType[S1] = sensorI2CCustom9V;				//Tetrix Servo Controller
+	SensorType[S2] = sensorColorNxtFULL;			//Colour Sensor
 	SensorType[S3] = sensorLightActive;				//Intensity Sensor (for line following)
 
 	bool runProgram = true;
@@ -217,11 +195,11 @@ task main()
 		eraseDisplay();
 		displayString(1, "Holes Dug: %d", holesDug);
 
-		LineFollow(false);
+		LineFollow();
 
 		runProgram = Dig();
 
-		holesDug += runProgram;
+		holesDug += runProgram;									//Track # of holes dug
 
 	}
 
